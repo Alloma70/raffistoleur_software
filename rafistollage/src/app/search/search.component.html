@@ -1,0 +1,15 @@
+<div class="search-container">
+    <h2>Rechercher un rafistolleur</h2>
+    <div class="search-form">
+      <input type="text" [(ngModel)]="quartier" placeholder="Entrez un quartier">
+      <button (click)="onSearch()">Rechercher</button>
+    </div>
+    <div class="results" *ngIf="rafistolleurs.length > 0">
+      <h3>Résultats:</h3>
+      <ul>
+        <li *ngFor="let rafistolleur of rafistolleurs">
+          {{ rafistolleur.nom }} {{ rafistolleur.prenom }} - {{ rafistolleur.quartier }}
+        </li>
+      </ul>
+    </div>
+  </div>

@@ -2,115 +2,102 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Client;
-use App\Models\Quartier;
 use App\Models\Rafistolleur;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function InscrisUtilisateur(Request $request)
-    {
+    public function register(Request $request)
+{
+    try {
         $validatedData = $request->validate([
             'nom' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'numero' => 'required|string|max:15',
+            'prenom' => 'required|string|max:255',
+            'contact' => 'required|string|max:255',
             'quartier' => 'required|string|max:255',
-            'dateN' => 'required|date',
-            'statut' => 'required|string|in:client,reparateur',
-            'password' => 'required|string|min:8|confirmed',
+            'statut' => 'required|in:client,rafistolleur',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
         ]);
 
-        // creer l'instance de l'utilisateur
+        $user = User::create([
+            'nom' => $validatedData['nom'],
+            'prenom' => $validatedData['prenom'],
+            'contact' => $validatedData['contact'],
+            'quartier' => $validatedData['quartier'],
+            'statut' => $validatedData['statut'],
+            'email' => $validatedData['email'],
+            'password' => Hash::make($validatedData['password']),
+        ]);
 
-        $utilisateur = new User;
-        
-        $utilisateur->nom = $request->nom;
-        $utilisateur->email = $request->email;
-        $utilisateur->numero = $request->numero;
-        $utilisateur->quartier = $request->quartier;
-        $utilisateur->dateN = $request->dateN;
-        $utilisateur->statut = $request->statut;
-        $utilisateur->password = bcrypt($request->password);
-
-        $utilisateur->save();
-        
-    // Crée l'instance de Quartier après avoir enregistré l'utilisateur
-        $quartier = new Quartier;
-        $quartier->nom = $donneesValides['nom'];
-        $quartier->email = $donneesValides['email'];
-        $quartier->user_id = $utilisateur->id; // Utilise l'ID de l'utilisateur enregistré
-        $quartier->save();
-
-        // creer l'instannce client et rafistolleur en fonctionn du statut de l'utilisateur
-    
-        if ($utilisateur->statut === 'client') {
-            $client = Client::create([
-                'nom' => $validatedData['nom'],
-                'email' => $validatedData['email'],
-                'numero' => $validatedData['numero'],
-                'quartier' => $validatedData['quartier'],
-                'dateN' => $validatedData['dateN'],
-                'password' => Hash::make($validatedData['password']),
-                'user_id' => $utilisateur->id,
+        if ($user->statut === 'client') {
+            Client::create([
+                'user_id' => $user->id,
+                'nom' => $user->nom,
+                'prenom' => $user->prenom,
+                'contact' => $user->contact,
+                'quartier' => $user->quartier,
+                'email' => $user->email,
             ]);
-            return response()->json(['message' => 'Client inscrit avec succès!', 'client' => $client], 201);
-        } elseif ($utilisateur->statut === 'rafistolleur') {
-            $reparateur = Rafistolleur::create([
-                'nom' => $validatedData['nom'],
-                'email' => $validatedData['email'],
-                'numero' => $validatedData['numero'],
-                'quartier' => $validatedData['quartier'],
-                'dateN' => $validatedData['dateN'],
-                'password' => Hash::make($validatedData['password']),
-                'user_id' => $utilisateur->id,
-            ]);
-            return response()->json(['message' => 'Rafistolleur inscrit avec succès!', 'reparateur' => $reparateur], 201);
         } else {
-            return response()->json(['error' => 'Statut de l\'utilisateur non valide'], 400);
+            Rafistolleur::create([
+                'user_id' => $user->id,
+                'nom' => $user->nom,
+                'prenom' => $user->prenom,
+                'contact' => $user->contact,
+                'quartier' => $user->quartier,
+                'email' => $user->email,
+            ]);
         }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Inscription réussie',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ], 201);
+    } catch (\Exception $e) {
+        \Log::error('Erreur lors de l\'inscription : ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Erreur lors de l\'inscription',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+    public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    $credentials = $request->only('email', 'password');
+
+    \Log::info('Tentative de connexion pour l\'email : ' . $credentials['email']);
+
+    if (Auth::attempt($credentials)) {
+        $user = Auth::user();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        \Log::info('Connexion réussie pour l\'utilisateur : ' . $user->id);
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
     }
 
+    \Log::warning('Échec de la connexion pour l\'email : ' . $credentials['email']);
 
-    public function connexion(Request $request)
-    {
-    try {
-        $request->validate([
-        'email' => 'email|required',
-        'password' => 'required'
-        ]);
-        
-        $credentials = request(['email', 'password']);
-        
-        if (!Auth::attempt($credentials)) {
-        return response()->json([
-            'status_code' => 500,
-            'message' => 'non authoriser'
-        ]);
-        }
-        
-        $user = User::where('email', $request->email)->first();
-        
-        $tokenResult = $user->createToken('authToken')->plainTextToken;
-        
-        return response()->json([
-        'status_code' => 200,
-        'access_token' => $tokenResult,
-        'token_type' => 'Bearer',
-        'message'  => 'connexion reussir'
-        ]);
-        
-    } catch (Exception $error) {
-        return response()->json([
-        'status_code' => 500,
-        'message' => 'Error in Login',
-        'error' => $error,
-        ]);
-    }
-    } 
-
+    return response()->json([
+        'message' => 'Les informations de connexion sont invalides'
+    ], 401);
+}
 }

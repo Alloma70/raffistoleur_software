@@ -1,55 +1,30 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory;
-    use HasApiTokens;
+    use HasApiTokens, Notifiable;
 
-    protected $table ='users';
-    protected $fillable = ['nom','email','numero','quartier','dateN','statut','password'];
+    protected $fillable = [
+        'nom', 'prenom', 'contact', 'quartier', 'statut', 'email', 'password',
+    ];
+
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
 
     public function client()
     {
-        return $this->hasOne(Client::class, 'user_id');
+        return $this->hasOne(Client::class);
     }
 
     public function rafistolleur()
     {
-        return $this->hasOne(Rafistolleur::class, 'user_id');
+        return $this->hasOne(Rafistolleur::class);
     }
-
-    
-    public function quartier()
-    {
-        return $this->hasOne(Quartier::class, 'user_id');
-    }
-
-
-    public function createToken(string $tokenName): self
-    {
-        $token = $this->createTokenPayload($tokenName);
-        $this->tokens()->create($token);
-
-        return $this;
-    }
-
-    protected function createTokenPayload(string $tokenName): array
-    {
-        $token = Str::random(60);
-
-        return [
-            'name' => $tokenName,
-            'token' => $token,
-            'abilities' => ['*'],
-        ];
-    }
-    
-    
 }

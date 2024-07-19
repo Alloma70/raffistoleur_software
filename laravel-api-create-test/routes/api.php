@@ -3,7 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AvisController;
+use App\Http\Controllers\SearchController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -15,11 +16,11 @@ use App\Http\Controllers\AvisController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-Route::post('/incription', [AuthController::class, 'register']);
-Route::post('/connexion', [AuthController::class, 'login']);
+// Route::middleware('auth:sanctum')->group(function () {
+    //Route::get('/search', [SearchController::class, 'search']);
+// });
 
-Route::post('/avis', [AvisController::class, 'create']);
+Route::get('/search', [SearchController::class, 'search']);

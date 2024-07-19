@@ -1,5 +1,6 @@
+// src/app/login/login.component.ts
 import { Component } from '@angular/core';
-import { AuthService } from '../auth.service';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 @Component({
@@ -8,55 +9,21 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
+  email: string = '';
+  password: string = '';
 
-  registerData = {
-    username: '',
-    email: '',
-    numero: '',
-    quartier: '',
-    dateN: '',
-    statut: '',
-    password: '',
-    confirmPassword: ''
-  };
+  constructor(private http: HttpClient, private router: Router) {}
 
-  loginData = {
-    email: '',
-    password: ''
-  };
-
-  constructor(private authService: AuthService, private router: Router) {}
-
-  signup() {
-    if (this.registerData.password !== this.registerData.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-    
-    this.authService.register(this.registerData).subscribe(
-      response => {
-        console.log('Registration successful', response);
-        alert('Registration successful!');
-        this.router.navigate(['/login']);
-      },
-      error => {
-        console.error('Error registering', error);
-        alert('Registration failed!');
-      }
-    );
-  }
-
-  login() {
-    this.authService.login(this.loginData).subscribe(
-      response => {
-        console.log('Login successful', response);
-        localStorage.setItem('token', response.token);
-        this.router.navigate(['/dashboard']); // Redirect to dashboard or desired page after login
-      },
-      error => {
-        console.error('Error logging in', error);
-        alert('Login failed!');
-      }
-    );
+  onSubmit() {
+    this.http.post('http://localhost:8000/api/login', { email: this.email, password: this.password })
+      .subscribe({
+        next: (response: any) => {
+          localStorage.setItem('token', response.access_token);
+          this.router.navigate(['/home']);
+        },
+        error: (error) => {
+          console.error('Login failed', error);
+        }
+      });
   }
 }

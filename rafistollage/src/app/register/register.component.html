@@ -1,0 +1,38 @@
+<div class="register-container">
+    <h2>Inscription</h2>
+    <form (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="nom">Nom:</label>
+        <input type="text" id="nom" [(ngModel)]="nom" name="nom" required>
+      </div>
+      <div class="form-group">
+        <label for="prenom">Prénom:</label>
+        <input type="text" id="prenom" [(ngModel)]="prenom" name="prenom" required>
+      </div>
+      <div class="form-group">
+        <label for="contact">Contact:</label>
+        <input type="text" id="contact" [(ngModel)]="contact" name="contact" required>
+      </div>
+      <div class="form-group">
+        <label for="quartier">Quartier:</label>
+        <input type="text" id="quartier" [(ngModel)]="quartier" name="quartier" required>
+      </div>
+      <div class="form-group">
+        <label for="statut">Statut:</label>
+        <select id="statut" [(ngModel)]="statut" name="statut" required>
+          <option value="client">Client</option>
+          <option value="rafistolleur">Rafistolleur</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" [(ngModel)]="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Mot de passe:</label>
+        <input type="password" id="password" [(ngModel)]="password" name="password" required>
+      </div>
+      <button type="submit">S'inscrire</button>
+    </form>
+    <p>Déjà un compte? <a routerLink="/login">Se connecter</a></p>
+  </div>
